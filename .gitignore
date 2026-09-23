@@ -1,0 +1,13 @@
+# dependencies
+node_modules/
+
+# test output
+test-results/
+playwright-report/
+blob-report/
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+
+# macOS
+.DS_Store

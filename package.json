@@ -1,0 +1,14 @@
+{
+  "name": "cypress-to-playwright",
+  "private": true,
+  "scripts": {
+    "serve": "http-server app -p 5173 --silent",
+    "test:cypress": "cypress run",
+    "test:playwright": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "cypress": "^16.1.0",
+    "http-server": "^14.1.1"
+  }
+}
