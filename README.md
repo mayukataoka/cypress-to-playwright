@@ -54,3 +54,58 @@ differences are visible line by line.
 - **`cy.intercept()` → `page.route()`**, with a different handler signature.
 - **Config.** `baseUrl` → `use.baseURL`; Playwright's `webServer` block starts
   the app under test, which Cypress has no built-in equivalent for.
+
+## Shadow DOM: where the migration stops being mechanical
+
+`app/shadow.html` adds three web components — one with an open shadow root, one
+nesting a component inside another component, and one with a closed root — plus
+a light-DOM node for contrast. `cypress/e2e/shadow.cy.js` and
+`tests/shadow.spec.ts` cover them.
+
+    cypress/e2e/shadow.cy.js   7 passing (327ms)
+    tests/shadow.spec.ts       5 passed  (1.1s)
+
+**Playwright pierces open shadow roots automatically.** Its `css=` and `text=`
+engines cross shadow boundaries at any depth, so a selector for a node inside a
+component is written exactly like a selector for anything else:
+
+```typescript
+await expect(page.getByTestId('card-title').first()).toHaveText('buy milk');
+```
+
+**Cypress does not, by default.** Each boundary needs an explicit `.shadow()`:
+
+```javascript
+cy.get('task-card').shadow().find('[data-testid=card-title]').should('have.text', 'buy milk');
+```
+
+The gap widens with nesting — Cypress needs one `.shadow()` per level, while the
+Playwright selector is unchanged:
+
+```javascript
+// Cypress: one hop per boundary
+cy.get('task-panel').shadow().find('task-card').shadow().find('[data-testid=card-title]')
+```
+```typescript
+// Playwright: no shadow-specific syntax at all
+page.locator('task-panel').getByTestId('card-title')
+```
+
+| | Cypress | Playwright |
+|---|---|---|
+| Open shadow root | `.shadow()`, or `includeShadowDom` | automatic |
+| Nested roots | one `.shadow()` per boundary | automatic, any depth |
+| Opt in globally | `includeShadowDom: true` in config | not applicable |
+| Closed shadow root | unreachable | unreachable |
+
+### Two things worth being precise about
+
+**A closed root is unreachable for everyone.** `attachShadow({ mode: 'closed' })`
+exposes no `shadowRoot` handle, so there is nothing for any driver to traverse.
+That is a property of the platform, not a Playwright advantage — both suites
+assert it, so the claim is tested rather than asserted in prose.
+
+**Cypress can opt in globally**, with `includeShadowDom: true` in the config, so
+this is a difference in default and ergonomics rather than a hard capability
+gap. It is worth knowing which one you are arguing: "Cypress cannot do it" is
+wrong, and an interviewer who has used Cypress will know it.
