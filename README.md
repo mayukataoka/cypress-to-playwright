@@ -100,10 +100,13 @@ page.locator('task-panel').getByTestId('card-title')
 
 ### Two things worth being precise about
 
-**A closed root is unreachable for everyone.** `attachShadow({ mode: 'closed' })`
-exposes no `shadowRoot` handle, so there is nothing for any driver to traverse.
-That is a property of the platform, not a Playwright advantage — both suites
-assert it, so the claim is tested rather than asserted in prose.
+**A closed root is unreachable from these two tools - but not from every
+tool.** `attachShadow({ mode: 'closed' })` exposes no `shadowRoot` handle to
+in-page JavaScript, so neither Cypress nor Playwright can reach in, and both
+suites assert that. Selenium *can*: its `getShadowRoot()` goes over the WebDriver
+protocol rather than the DOM API, and returns a queryable root anyway. That is
+verified in the companion Java repository, not assumed. So the accurate claim is
+"closed is opaque to the DOM API", not "closed is unreachable by any tool".
 
 **Cypress can opt in globally**, with `includeShadowDom: true` in the config, so
 this is a difference in default and ergonomics rather than a hard capability
